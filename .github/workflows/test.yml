@@ -1,0 +1,106 @@
+name: 'build-test'
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./
+        with:
+          valueFile: '__tests__/fixtures/values.yaml'
+          propertyPath: 'backend.version'
+          value: v1.0.1
+          commitChange: 'false'
+
+  test-no-changes-did-not-fail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./
+        with:
+          valueFile: '__tests__/fixtures/values.yaml'
+          propertyPath: 'backend.version'
+          value: v1.2.0
+          commitChange: 'false'
+
+  test-target-repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: infrastructure
+      - name: Update values.yaml
+        uses: ./infrastructure
+        with:
+          valueFile: '__tests__/fixtures/values.yaml'
+          propertyPath: 'backend.version'
+          value: v1.2.1
+          commitChange: 'false'
+          workDir: infrastructure
+
+  test-update-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Cat Original values.yaml
+        run: cat __tests__/fixtures/values.yaml
+      - name: Update values.yaml
+        uses: ./
+        with:
+          valueFile: '__tests__/fixtures/values.yaml'
+          propertyPath: 'backend.version'
+          value: v1.0.1
+          commitChange: 'false'
+      - name: Cat Updated values.yaml
+        run: cat __tests__/fixtures/values.yaml
+
+  test-multiple-file-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./
+        with:
+          commitChange: 'false'
+          changes: |
+            {
+              "__tests__/fixtures/values.json": {
+                "backend.version": "v1.0.1",
+                "frontend": true
+              },
+              "__tests__/fixtures/values.dev.yaml": {
+                "backend.version": "v1.0.1",
+                "frontend": true
+              },
+              "__tests__/fixtures/values.stage.yaml": {
+                "backend.version": "v1.0.1",
+                "frontend": true
+              },
+              "__tests__/fixtures/values.prod.yaml": {
+                "backend.version": "v1.0.1",
+                "frontend": true
+              }
+            }
+
+  test-value-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./
+        with:
+          valueFile: '__tests__/fixtures/values.yaml'
+          propertyPath: 'config.prod'
+          value: "!!bool 'true'"
+          commitChange: 'false'
+      - uses: ./
+        with:
+          valueFile: '__tests__/fixtures/values.yaml'
+          propertyPath: 'config.version'
+          value: "!!int '1234'"
+          commitChange: 'false'
