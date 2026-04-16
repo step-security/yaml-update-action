@@ -1302,7 +1302,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static-eval
 MIT
-This software is released under the MIT license:
+MIT License
+
+Copyright (c) 2013 James Halliday
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -1365,8 +1367,7 @@ THE SOFTWARE.
 
 underscore
 MIT
-Copyright (c) 2009-2020 Jeremy Ashkenas, DocumentCloud and Investigative
-Reporters & Editors
+Copyright (c) 2009-2022 Jeremy Ashkenas, Julian Gonggrijp, and DocumentCloud and Investigative Reporters & Editors
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
