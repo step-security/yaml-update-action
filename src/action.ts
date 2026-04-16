@@ -1,7 +1,7 @@
 import { load } from 'js-yaml'
 import fs from 'fs'
 import path from 'path'
-import jp from 'jsonpath'
+import { JSONPath } from 'jsonpath-plus'
 import { Options } from './options'
 import { formatGuesser, formatParser } from './parser'
 import { Octokit } from '@octokit/rest'
@@ -116,6 +116,34 @@ export async function runTest<T extends ContentNode>(
   return files as (ChangedFile & { json: T })[]
 }
 
+function jpGet(obj: ContentNode, path: string): unknown {
+  return JSONPath({ path, json: obj, wrap: false })
+}
+
+function jpSet(obj: ContentNode, path: string, value: unknown): void {
+  const result = JSONPath({ path, json: obj, resultType: 'all' })
+  if (result.length > 0) {
+    result[0].parent[result[0].parentProperty] = value
+    return
+  }
+  const pathArray = JSONPath.toPathArray(path)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let current: any = obj
+  for (let i = 1; i < pathArray.length - 1; i++) {
+    const key = pathArray[i]
+    if (current[key] === undefined) {
+      const nextKey = pathArray[i + 1]
+      current[key] = /^\d+$/.test(String(nextKey)) ? [] : {}
+    }
+    current = current[key]
+  }
+  current[pathArray[pathArray.length - 1]] = value
+}
+
+function jpPaths(obj: ContentNode, path: string): string[] {
+  return JSONPath({ path, json: obj, resultType: 'path' })
+}
+
 export function replace<T extends ContentNode>(
   value: string | number | boolean | unknown[],
   jsonPath: string,
@@ -146,13 +174,13 @@ export function replace<T extends ContentNode>(
     isAppendArrayNode(content, jsonPath)
   ) {
     jsonPath = jsonPath.replace(APPEND_ARRAY_EXPRESSION, '')
-    const parent: unknown[] = jp.value(copy, jsonPath)
+    const parent: unknown[] = jpGet(copy, jsonPath) as unknown[]
 
     parent.push(value)
     value = parent
   }
 
-  jp.value(copy, jsonPath, value)
+  jpSet(copy, jsonPath, value)
 
   return copy
 }
@@ -350,8 +378,12 @@ export function processFile(
 }
 
 const pathNotExists = (content: ContentNode, jsonPath: string): boolean => {
+  if (jsonPath.includes(APPEND_ARRAY_EXPRESSION)) {
+    return true
+  }
   return (
-    jp.paths(content, jsonPath) && jp.value(content, jsonPath) === undefined
+    jpPaths(content, jsonPath).length === 0 ||
+    jpGet(content, jsonPath) === undefined
   )
 }
 
@@ -366,10 +398,7 @@ const isAppendArrayNode = (content: ContentNode, jsonPath: string): boolean => {
 
   jsonPath = jsonPath.replace(APPEND_ARRAY_EXPRESSION, '')
 
-  const parent = jp.value(
-    content,
-    jsonPath.replace(APPEND_ARRAY_EXPRESSION, '')
-  )
+  const parent = jpGet(content, jsonPath)
 
   return Array.isArray(parent)
 }
