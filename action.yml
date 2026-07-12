@@ -1,6 +1,6 @@
 name: 'YAML Update Action'
 description: 'Update the property of an existing YAML File'
-author: 'step-security'
+author: 'Frank Jogeleit <frank.jogeleit@web.de>'
 inputs:
   valueFile:
     required: false
