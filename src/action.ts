@@ -335,8 +335,7 @@ export function processFile(
   )
 
   const format = determineFinalFormat(filePath, options.format, actions) as
-    | Format.JSON
-    | Format.YAML
+    Format.JSON | Format.YAML
 
   const parser = formatParser[format]
 
